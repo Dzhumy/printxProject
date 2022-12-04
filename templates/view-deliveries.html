@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Create Order Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <table style="width:100%" class="table">
+        <tr>
+            <th></th>
+            <th>ID</th>
+            <th>TITLE</th>
+            <th>COUNT</th>
+        </tr>
+        {% for item in values %}
+            <tr>
+                <td><input type="checkbox" id="order_{{loop.index}}"></td>
+                <td>{{loop.index}}</td>
+                <td>{{item.title}}</td>
+                <td>{{item.count}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

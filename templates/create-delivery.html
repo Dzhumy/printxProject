@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Create Order Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>Adding new order</h1>
+    <form method="post">
+        <input type="text" name="title" id="title" class="form_control" placeholder="Enter name"><br><br>
+        <input type="number" name="count" id="count" class="form_control" placeholder="Enter number of items"><br><br>
+        <input type="submit" class="btn btn-success" value="Send"><br>
+    </form>
+</div>
+{% endblock %}

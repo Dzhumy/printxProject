@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX About Page
+{% endblock %}
+
+{% block style %}
+    .rotate {
+      opacity: 0;
+      -moz-opacity: 0;
+      filter:alpha(opacity=0);
+    }
+
+    .rotate:nth-child(1) {
+              animation: rotate 0.5s 0s linear forwards;
+    }
+
+    .rotate:nth-child(2) {
+              animation: rotate 0.5s 0.5s linear forwards;
+    }
+
+    .rotate:nth-child(3) {
+              animation: rotate 0.5s 1s linear forwards;
+    }
+
+    .rotate:nth-child(4) {
+              animation: rotate 0.5s 1.5s linear forwards;
+    }
+
+    .rotate:nth-child(5) {
+              animation: rotate 0.5s 2s linear forwards;
+    }
+
+    .rotate:nth-child(6) {
+              animation: rotate 0.5s 2.5s linear forwards;
+    }
+
+     @keyframes rotate {
+     0% {
+       opacity: 0;
+     }
+     100% {
+       opacity: 1;
+     }
+    }
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>Here is some information about us...</h1>
+    <h2>Team members:</h2>
+    <div class="text_rotate">
+        <ul>
+            <li class="rotate">Edgars Dudins</li>
+            <li class="rotate">Nadīna Tarnovska</li>
+            <li class="rotate">Laine Elliņa</li>
+            <li class="rotate">Hatuna Halvaša</li>
+            <li class="rotate">Valters Žilvinskus</li>
+            <li class="rotate">Aurēlija Derbuša</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

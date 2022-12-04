@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Create Order Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>Upload new order list</h1>
+    <h5>Allowed formats: .csv .txt</h5>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="filename" id="myFile" class="form_control"><br><br>
+        <input type="submit" class="btn btn-success" value="Send"><br>
+    </form>
+</div>
+{% endblock %}
