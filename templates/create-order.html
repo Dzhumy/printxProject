@@ -18,16 +18,22 @@ PrintX Create Order Page
     {% endfor %}
 
     <div class="shadow p-3 mb-5 bg-body rounded">
-        <h1>Adding new order</h1>
+        <h1>Adding New Order</h1>
         <form method="POST">
             {{ form.hidden_tag() }}
 
             {{ form.name.label(class="form-label") }}
             {{ form.name(class="form-control") }}
             <br/>
+
+            {{ form.order_type.label(class="form-label") }}
+            {{ form.order_type(class="form-control") }}
+            <br/>
+
             {{ form.count.label(class="form-label") }}
             {{ form.count(class="form-control") }}
             <br/>
+
             {{ form.submit(class="btn btn-success") }}
 
         </form>

@@ -1,14 +1,18 @@
-import datetime
 import os
-from flask import Flask, render_template, url_for, request, redirect, session, flash
-from datetime import datetime,timedelta
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, PasswordField, SubmitField, FileField
-from wtforms.validators import DataRequired, NumberRange
+import csv
+
+from datetime import datetime
+from flask import Flask, render_template, url_for, request, redirect, flash
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
+from markupsafe import Markup
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+# Forms
+from webforms import LoginForm, CreateMachine, CreateOrder, UploadForm
+# Database
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
 
 # Create a Flask Instance
 app = Flask(__name__)
@@ -18,8 +22,11 @@ app.config['SECRET_KEY'] = "printx-secretkey"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
+# Files
 app.config['UPLOAD_FOLDER'] = 'static/files'
+ALLOWED_EXTENSIONS = {'csv'}
 
 # Flask Login Manager
 login_manager = LoginManager()
@@ -28,54 +35,75 @@ login_manager.login_view = 'login'
 login_manager.login_message_category = "alert-warning"
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return Users.query.get(int(user_id))
+def allowed_file(filename):
+    return '.' in filename and \
+            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-class Users(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False, unique=True)
-    password_hash = db.Column(db.String(128))
-
-    @property
-    def password(self):
-        raise AttributeError('password is not a readable attribute!')
-
-    @password.setter
-    def password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def verify_password(self, password):
-        return check_password_hash(self.password_hash, password)
+@app.route('/about')
+@login_required
+def about():
+    return render_template("about.html")
 
 
-class Delivery(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    count = db.Column(db.Integer, nullable=False)
-    date_added = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __init__(self, name, count):
-        self.name = name
-        self.count = count
-
-
-class CreateDelivery(FlaskForm):
-    name = StringField("Enter Name:", validators=[DataRequired()])
-    count = IntegerField("Enter number of items:", validators=[DataRequired(), NumberRange(min=1, message='Must enter a number greater than 0')])
-    submit = SubmitField("Submit")
-
-
-class LoginForm(FlaskForm):
-    user_name = StringField("Username", validators=[DataRequired()], render_kw={"placeholder": "Enter Username"})
-    password = PasswordField("Password", validators=[DataRequired()], render_kw={"placeholder": "Enter Password"})
-    submit = SubmitField("Login")
+@app.route('/create-machine', methods=['GET', 'POST'])
+@login_required
+def create_machine():
+    form = CreateMachine()
+    if form.validate_on_submit():
+        machine = Machine(name=form.name.data, equipment_capacity=form.equipment_capacity.data, available_hours=form.available_hours.data)
+        db.session.add(machine)
+        db.session.commit()
+        flash(Markup("<b>Machine:</b> " + str(form.name.data) + " ; <b>Capacity Of Equipment:</b> " + str(form.equipment_capacity.data) + " ; <b>Available Hours:</b> " + str(form.available_hours.data) + " - has been added successfully!"))
+        form.name.data = ''
+        form.equipment_capacity.data = ''
+        form.available_hours.data = ''
+        return redirect(request.url)
+    return render_template("create-machine.html", form=form)
 
 
-class UploadForm(FlaskForm):
-    file = FileField("Enter deliveries file: ", validators=[DataRequired()])
-    submit = SubmitField("Upload")
+@app.route('/create-order', methods=['GET', 'POST'])
+@login_required
+def create_order():
+    form = CreateOrder()
+    if form.validate_on_submit():
+        order = Order(name=form.name.data, order_type=form.order_type.data, count=form.count.data)
+        db.session.add(order)
+        db.session.commit()
+        flash(Markup("<b>Item:</b> " + form.name.data + " ; <b>Type:</b> " + form.order_type.data + " ; <b>Count:</b> " + str(form.count.data) + " - has been added successfully!"))
+        form.name.data = ''
+        form.order_type.data = ''
+        form.count.data = ''
+        return redirect(request.url)
+    return render_template("create-order.html", form=form)
+
+
+@app.route('/delete-machine/<int:id>')
+@login_required
+def delete_machine(id):
+    machine_to_delete = Machine.query.get_or_404(id)
+    try:
+        db.session.delete(machine_to_delete)
+        db.session.commit()
+        flash("Machine Deleted Successfully!")
+        return render_template("view-machines.html", values=Machine.query.all())
+    except:
+        flash("Error While Deleting User!")
+        return render_template("view-machines.html", values=Machine.query.all())
+
+
+@app.route('/delete-order/<int:id>')
+@login_required
+def delete_order(id):
+    order_to_delete = Order.query.get_or_404(id)
+    try:
+        db.session.delete(order_to_delete)
+        db.session.commit()
+        flash("Order Deleted Successfully!")
+        return render_template("view-orders.html", values=Order.query.all())
+    except:
+        flash("Error While Deleting Machine!")
+        return render_template("view-orders.html", values=Order.query.all())
 
 
 @app.route('/')
@@ -83,6 +111,11 @@ class UploadForm(FlaskForm):
 @login_required
 def index():
     return render_template("index.html")
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Users.query.get(int(user_id))
 
 
 @app.route('/login', methods=["POST", "GET"])
@@ -109,47 +142,40 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route('/create-delivery', methods=['GET', 'POST'])
+@app.route('/update-machine/<int:id>', methods=['GET', 'POST'])
 @login_required
-def create_delivery():
-    form = CreateDelivery()
+def update_machine(id):
+    form = CreateMachine()
+    machine_to_update = Machine.query.get_or_404(id)
     if form.validate_on_submit():
-        delivery = Delivery(name=form.name.data, count=form.count.data)
-        db.session.add(delivery)
-        db.session.commit()
-        flash("Item: " + str(form.name.data) + " ; Count: " + str(form.count.data) + " - has been added successfully!")
-        form.name.data = ''
-        form.count.data = ''
-        return redirect(request.url)
-    return render_template("create-delivery.html", form=form)
-
-
-@app.route('/upload-delivery', methods=['GET', 'POST'])
-@login_required
-def upload_delivery():
-    form = UploadForm()
-
-    if form.validate_on_submit():
-        filename = secure_filename(form.file.data.filenane)
-        form.file.data.save('uploads/'+filename)
-        return redirect(url_for('upload_delivery'))
-
-    return render_template("upload-delivery.html", form=form)
+        machine_to_update.name = request.form['name']
+        machine_to_update.equipment_capacity = request.form['equipment_capacity']
+        machine_to_update.available_hours = request.form['available_hours']
+        try:
+            db.session.commit()
+            flash("Machine Updated Successfully!")
+            return redirect(url_for('view_machines'))
+        except:
+            flash("Error!")
+            return render_template("update-machine.html", form=form, machine_to_update=machine_to_update)
+    else:
+        return render_template("update-machine.html", form=form, machine_to_update=machine_to_update, id=id)
 
 
 # Update Database Record
 @app.route('/update-order/<int:id>', methods=['GET', 'POST'])
 @login_required
 def update_order(id):
-    form = CreateDelivery()
-    order_to_update = Delivery.query.get_or_404(id)
+    form = CreateOrder()
+    order_to_update = Order.query.get_or_404(id)
     if form.validate_on_submit():
         order_to_update.name = request.form['name']
+        order_to_update.order_type = request.form['order_type']
         order_to_update.count = request.form['count']
         try:
             db.session.commit()
-            flash("Item Updated Successfully!")
-            return redirect(url_for('view_deliveries'))
+            flash("Order Updated Successfully!")
+            return redirect(url_for('view_orders'))
         except:
             flash("Error!")
             return render_template("update-order.html", form=form, order_to_update=order_to_update)
@@ -157,33 +183,94 @@ def update_order(id):
         return render_template("update-order.html", form=form, order_to_update=order_to_update, id=id)
 
 
-@app.route('/delete/<int:id>')
+def save_file(form, folder):
+    date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    uploaded_file = form.file.data
+    file_name = date + "_" + form.file_name.data.lower().replace(" ", "_") + ".csv"
+    filepath = os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'] + folder, secure_filename(file_name))
+    uploaded_file.save(filepath)
+
+    return filepath
+
+
+@app.route('/upload-machine', methods=['GET', 'POST'])
 @login_required
-def delete_order(id):
-    order_to_delete = Delivery.query.get_or_404(id)
-    name = None
-    form = CreateDelivery()
-    try:
-        db.session.delete(order_to_delete)
-        db.session.commit()
-        flash("Order Deleted Successfully!")
-        return render_template("view-deliveries.html", values=Delivery.query.all())
-    except:
-        flash("Error While Deleting User!")
-        return render_template("view-deliveries.html", values=Delivery.query.all())
+def upload_machine():
+    form = UploadForm()
+    if form.validate_on_submit():
+        folder = '/Machines'
+        filepath = save_file(form, folder)
+        try:
+            with open(filepath, 'r', encoding='utf-8') as file:
+                # Process CSV file
+                reader = csv.reader(file, delimiter=',')
+                next(reader)
+                for row in reader:
+                    name, equipment_capacity, available_hours = row
+                    machine = Machine(name=name, equipment_capacity=equipment_capacity, available_hours=available_hours)
+                    db.session.add(machine)
+                db.session.commit()
+                flash('File successfully uploaded!')
+        except:
+            flash("Error in file processing!")
+            return redirect(url_for('upload_machine'))
+        form.file_name.data = ''
+        form.file.data = None
+        return redirect(url_for('view_machines'))
+
+    if form.file_name.errors:
+        flash(form.file_name.errors[0])
+
+    if form.file.errors:
+        flash(form.file.errors[0])
+
+    return render_template("upload-machine.html", form=form)
 
 
-@app.route('/view_deliveries')
+@app.route('/upload-order', methods=['GET', 'POST'])
 @login_required
-def view_deliveries():
-    # delete_table_records(Delivery.query.all())
-    return render_template("view-deliveries.html", values=Delivery.query.all())
+def upload_order():
+    form = UploadForm()
+    if form.validate_on_submit():
+        folder = '/Orders'
+        filepath = save_file(form, folder)
+        try:
+            with open(filepath, 'r', encoding='utf-8') as file:
+                # Process CSV file
+                reader = csv.reader(file, delimiter=',')
+                next(reader)
+                for row in reader:
+                    name, order_type, count = row
+                    order = Order(name=name, order_type=order_type, count=count)
+                    db.session.add(order)
+                db.session.commit()
+                flash('File successfully uploaded!')
+        except:
+            flash("Error in file processing!")
+            return redirect(url_for('upload_order'))
+        form.file_name.data = ''
+        form.file.data = None
+        return redirect(url_for('view_orders'))
+
+    if form.file_name.errors:
+        flash(form.file_name.errors[0])
+
+    if form.file.errors:
+        flash(form.file.errors[0])
+
+    return render_template("upload-order.html", form=form)
 
 
-@app.route('/about')
+@app.route('/view-machines')
 @login_required
-def about():
-    return render_template("about.html")
+def view_machines():
+    return render_template("view-machines.html", values=Machine.query.all())
+
+
+@app.route('/view-orders')
+@login_required
+def view_orders():
+    return render_template("view-orders.html", values=Order.query.all())
 
 
 # Invalid URL error handler
@@ -205,11 +292,54 @@ def page_not_found(e):
 #     db.session.commit()
 
 # IN CASE NEEDED - USER CREATION
-# def create_user(username,password):
-#     hashed_pw = generate_password_hash(password, "sha256")
-#     user_create = Users(username=username, password_hash=hashed_pw)
-#     db.session.add(user_create)
-#     db.session.commit()
+def create_user(username,password):
+    hashed_pw = generate_password_hash(password, "sha256")
+    user_create = Users(username=username, password_hash=hashed_pw)
+    db.session.add(user_create)
+    db.session.commit()
+
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    order_type = db.Column(db.String(100))
+    count = db.Column(db.Integer, nullable=False)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, name, order_type, count):
+        self.name = name
+        self.order_type = order_type
+        self.count = count
+
+
+class Machine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    equipment_capacity = db.Column(db.Integer, nullable=False)
+    available_hours = db.Column(db.Integer, nullable=False)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, name, equipment_capacity, available_hours):
+        self.name = name
+        self.equipment_capacity = equipment_capacity
+        self.available_hours = available_hours
+
+
+class Users(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute!')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 with app.app_context():
