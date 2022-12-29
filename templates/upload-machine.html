@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Upload Machine Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div>
+            {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+    {% endfor %}
+    <div class="shadow p-3 mb-5 bg-body rounded">
+        <h1>Upload New Machine list</h1>
+        <form method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            {{ form.file_name.label(class="form-label") }}<br>
+            {{ form.file_name(class="form-control") }}<br>
+
+            {{ form.file.label(class="form-label") }}<br>
+            {{ form.file(class="form-control") }} <br><br>
+
+            {{ form.submit(class="btn btn-success") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

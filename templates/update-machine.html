@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Update Machine Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div>
+            {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    <div class="shadow p-3 mb-5 bg-body rounded">
+        <h1>Update Machine</h1>
+        <form action="/update-machine/{{ machine_to_update.id }}" method="POST">
+            {{ form.hidden_tag() }}
+
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control", value=machine_to_update.name) }}
+            <br/>
+
+            {{ form.equipment_capacity.label(class="form-label") }}
+            {{ form.equipment_capacity(class="form-control", value=machine_to_update.equipment_capacity) }}
+            <br/>
+
+            {{ form.available_hours.label(class="form-label") }}
+            {{ form.available_hours(class="form-control", value=machine_to_update.available_hours) }}
+            <br/>
+
+            {{ form.submit(class="btn btn-success") }}
+
+            <a href="{{ url_for('delete_machine', id=id) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want delete this machine?');"> Delete </a>
+
+        </form>
+    </div>
+</div>
+{% endblock %}

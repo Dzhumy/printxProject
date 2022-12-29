@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Create Machine Page
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div>
+            {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+    {% endfor %}
+
+    <div class="shadow p-3 mb-5 bg-body rounded">
+        <h1>Adding New Machine</h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control") }}
+            <br/>
+
+            {{ form.equipment_capacity.label(class="form-label") }}
+            {{ form.equipment_capacity(class="form-control") }}
+            <br/>
+
+            {{ form.available_hours.label(class="form-label") }}
+            {{ form.available_hours(class="form-control") }}
+            <br/>
+
+            {{ form.submit(class="btn btn-success") }}
+
+        </form>
+    </div>
+</div>
+{% endblock %}
