@@ -78,6 +78,16 @@ def create_order():
     return render_template("create-order.html", form=form)
 
 
+@app.route('/create-solution')
+@login_required
+def create_solution():
+    is_result, figure, output_list = optimization_algorithm()
+    if is_result:
+        return render_template("create-solution.html", is_result=is_result, figure=figure, output_list=output_list)
+    else:
+        return render_template("create-solution.html", is_result=is_result, figure=figure, output_list=output_list)
+
+
 @app.route('/delete-machine/<int:id>')
 @login_required
 def delete_machine(id):
@@ -292,11 +302,11 @@ def page_not_found(e):
 #     db.session.commit()
 
 # IN CASE NEEDED - USER CREATION
-def create_user(username,password):
-    hashed_pw = generate_password_hash(password, "sha256")
-    user_create = Users(username=username, password_hash=hashed_pw)
-    db.session.add(user_create)
-    db.session.commit()
+# def create_user(username,password):
+#     hashed_pw = generate_password_hash(password, "sha256")
+#     user_create = Users(username=username, password_hash=hashed_pw)
+#     db.session.add(user_create)
+#     db.session.commit()
 
 
 class Order(db.Model):
@@ -340,6 +350,10 @@ class Users(db.Model, UserMixin):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+# Optmization model
+from optimization_model import optimization_algorithm
 
 
 with app.app_context():
