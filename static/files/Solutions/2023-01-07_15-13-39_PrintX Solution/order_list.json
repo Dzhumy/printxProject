@@ -1,0 +1,34 @@
+[
+    {
+        "order": "Grāmata",
+        "type": "Offset Printing",
+        "profit": 3.0,
+        "produced": 10,
+        "minimum_demand": 10,
+        "status": "ENOUGH"
+    },
+    {
+        "order": "Burtnīca",
+        "type": "Digital Printing",
+        "profit": 15.0,
+        "produced": 30,
+        "minimum_demand": 30,
+        "status": "ENOUGH"
+    },
+    {
+        "order": "Avīzes",
+        "type": "Screen Printing",
+        "profit": 56.0,
+        "produced": 56,
+        "minimum_demand": 56,
+        "status": "ENOUGH"
+    },
+    {
+        "order": "Plakāts",
+        "type": "Letterpress Printing",
+        "profit": 105.0,
+        "produced": 70,
+        "minimum_demand": 5,
+        "status": "! EXTRA !"
+    }
+]

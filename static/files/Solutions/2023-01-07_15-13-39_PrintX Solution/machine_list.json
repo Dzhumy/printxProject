@@ -1,0 +1,12 @@
+[
+    {
+        "machine": "Thatcher",
+        "used_hours": 498.0,
+        "available_hours": 500
+    },
+    {
+        "machine": "Scraper",
+        "used_hours": 332.0,
+        "available_hours": 600
+    }
+]

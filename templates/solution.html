@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}
+PrintX Create Solution Page
+{% endblock %}
+
+{% block script %}
+<script src='https://cdn.plot.ly/plotly-2.16.1.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+        <canvas id="orderChart" width="400" height="200"></canvas>
+        <script>
+            let orderGraph = document.getElementById('orderChart').getContext('2d');
+            let datasets_Order = [];
+            let order_name = [];
+            let actual_production = [];
+            let minimum_demand = [];
+            {% for order in order_list %}
+                order_name.push('{{order.order}} ' + '(' +  '{{order.type}}' + ')');
+                actual_production.push('{{order.produced}}');
+                minimum_demand.push('{{order.minimum_demand}}');
+            {% endfor %}
+            datasets_Order.push({
+                label: 'Actual Production',
+                backgroundColor: 'rgb(54, 162, 235)',
+                borderColor: 'rgb(54, 162, 235)',
+                data: actual_production
+            });
+            datasets_Order.push({
+                label: 'Minimum Demand',
+                backgroundColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(255, 99, 132)',
+
+                data: minimum_demand
+            });
+            let chart = new Chart(orderGraph, {
+              // The type of chart we want to create
+              type: 'bar',
+              // The data for our dataset
+              data: {
+                labels: order_name,
+                datasets: datasets_Order
+              },
+
+              // Configuration options go here
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  title: {
+                      display: true,
+                      text: 'Completed Order Graph'
+                  },
+                  scales: {
+                      yAxes: [{
+                          scaleLabel: {
+                              display: true,
+                              labelString: 'Production Count'
+                          }
+                      }],
+                      xAxes: [{
+                          scaleLabel: {
+                              display: true,
+                              labelString: 'Procution Name'
+                          }
+                      }]
+                  }
+
+              }
+            });
+        </script>
+        <h3>Completed Orders</h3> <br>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle text-center table-responsive">
+                <thead>
+                    <tr>
+                        <th scope="col">Order Name</th>
+                        <th scope="col">Order Type</th>
+                        <th scope="col">One Unit Profit</th>
+                        <th scope="col">Production Profit</th>
+                        <th scope="col">Produced quantity</th>
+                        <th scope="col">Minimum Demand</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_list %}
+                          <tr>
+                                <td>{{ item.order }}</td>
+                                <td>{{ item.type }}</td>
+                                <td>{{ '%0.2f' % (item.profit / item.produced) }} &euro;</td>
+                                <td>{{ '%0.2f' % item.profit }} &euro;</td>
+                                <td>{{ item.produced }}</td>
+                                <td>{{ item.minimum_demand }} </td>
+                                {% if item.status == 'ENOUGH' %}
+                                    <td style="color:green" class="fw-semibold">{{ item.status }}</td>
+                                {% elif item.status == '! EXTRA !' %}
+                                    <td style="color:orange" class="fw-bolder">{{ item.status }}</td>
+                                {% else %}
+                                    <td style="color:red" class="fw-bold">{{ item.status }}</td>
+                                {% endif %}
+                          </tr>
+                    {% endfor %}
+                    <tr class="fw-bold">
+                        <td>Total</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>{{'%0.2f' % order_list|sum(attribute='profit')}} &euro;</td>
+                        <td>{{order_list|sum(attribute='produced')}}</td>
+                        <td>{{order_list|sum(attribute='minimum_demand')}}</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <canvas id="machineChart" width="400" height="200"></canvas>
+            <script>
+                let machineGraph = document.getElementById('machineChart').getContext('2d');
+                let datasets_Machine = [];
+                let machine_name = [];
+                let used_time = [];
+                {% for machine in machine_list %}
+                    machine_name.push('{{machine.machine}}');
+                    used_time.push({{'%0.2f' % ((machine.used_hours / machine.available_hours) * 100)}});
+                {% endfor %}
+                datasets_Machine.push({
+                    label: 'Used Time',
+                    backgroundColor: 'rgb(54, 162, 235)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    data: used_time
+                });
+                let chart1 = new Chart(machineGraph, {
+                  // The type of chart we want to create
+                  type: 'bar',
+                  // The data for our dataset
+                  data: {
+                    labels: machine_name,
+                    datasets: datasets_Machine
+                  },
+
+                  // Configuration options go here
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      title: {
+                          display: true,
+                          text: 'Machines Utilization Graph'
+                      },
+                      scales: {
+                          yAxes: [{
+                              ticks: {
+                                  min: 0,
+                                  max: 100
+                              },
+                              scaleLabel: {
+                                  display: true,
+                                  labelString: 'Utilization'
+                              }
+                          }],
+                          xAxes: [{
+                              barPercentage: 0.5,
+                              categoryPercentage: 0.5,
+                              scaleLabel: {
+                                  display: true,
+                                  labelString: 'Machine Name'
+                              }
+                          }]
+                      }
+                  }
+                });
+            </script>
+
+            <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle text-center table-responsive">
+                <thead>
+                    <tr>
+                        <th scope="col">Machine Name</th>
+                        <th scope="col">Used Time</th>
+                        <th scope="col">Total Time Available</th>
+                        <th scope="col">Utilization</th>
+                        <th scope="col">Usage Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in machine_list %}
+                          <tr>
+                                <td>{{ item.machine }}</td>
+                                <td>{{ item.used_hours }} </td>
+                                <td>{{ item.available_hours }} </td>
+                                <td>{{'%0.2f' % ((item.used_hours / item.available_hours) * 100)+" %" |string}}</td>
+                                {% if 60 < ((item.used_hours / item.available_hours) * 100) <= 100 %}
+                                    <td style="color:green" class="fw-semibold">HIGH</td>
+                                {% elif 30 <= ((item.used_hours / item.available_hours) * 100) <= 60 %}
+                                    <td style="color:orange" class="fw-bolder">MEDIUM</td>
+                                {% else %}
+                                    <td style="color:red" class="fw-bold">LOW</td>
+                                {% endif %}
+                          </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+</div>
+
+{% endblock %}
+
+
