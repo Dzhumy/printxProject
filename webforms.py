@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, FileField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, FileField, SelectField, HiddenField, \
+    FieldList
 from wtforms.validators import DataRequired, NumberRange, Regexp
 
 
@@ -13,9 +14,10 @@ class LoginForm(FlaskForm):
 class CreateOrder(FlaskForm):
     name = StringField("Enter Name:", validators=[DataRequired()])
     choices = [
-        ('option1', 'Option 1'),
-        ('option2', 'Option 2'),
-        ('option3', 'Option 3')
+        ('Offset Printing', 'Offset Printing'),
+        ('Digital Printing', 'Digital Printing'),
+        ('Screen Printing', 'Screen Printing'),
+        ('Letterpress Printing', 'Letterpress Printing')
     ]
     order_type = SelectField('Label', choices=choices, validators=[DataRequired()])
     count = IntegerField("Enter Number Of Items:", validators=[DataRequired(), NumberRange(min=1, message='Must enter a number greater than 0')])
@@ -33,3 +35,8 @@ class UploadForm(FlaskForm):
     file_name = StringField("Enter Desired File Name:", validators=[DataRequired(), Regexp(r'^[A-Za-z0-9\s]+$', message='Field must contain only English letters, numbers, and whitespaces')])
     file = FileField("Upload a File: ", validators=[DataRequired(), FileAllowed(['csv'], message='Error! Please upload CSV file')])
     submit = SubmitField("Upload")
+
+
+class SolutionForm(FlaskForm):
+    folder_name = StringField("Enter Desired Folder Name For Solution:", validators=[DataRequired(), Regexp(r'^[A-Za-z0-9\s]+$', message='Field must contain only English letters, numbers, and whitespaces')])
+    submit = SubmitField('Save')

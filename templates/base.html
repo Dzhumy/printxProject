@@ -43,12 +43,12 @@
                   </ul>
                 </li>
                 <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle {% if request.path == '/create-solution' %} active {% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <a class="nav-link dropdown-toggle {% if request.path == '/create-solution' or request.path == '/view-solutions'%} active {% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Solution
                   </a>
                   <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="{{ url_for('create_solution')}}">Create Solution</a></li>
-                    <li><a class="dropdown-item" href="#">Solution history</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('view_solutions')}}">Solution history</a></li>
                   </ul>
                 </li>
                 <li class="nav-item">

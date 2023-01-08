@@ -1,5 +1,7 @@
+import json
 import os
 import csv
+import shutil
 
 from datetime import datetime
 from flask import Flask, render_template, url_for, request, redirect, flash
@@ -8,7 +10,7 @@ from markupsafe import Markup
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 # Forms
-from webforms import LoginForm, CreateMachine, CreateOrder, UploadForm
+from webforms import LoginForm, CreateMachine, CreateOrder, UploadForm, SolutionForm
 # Database
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -78,14 +80,32 @@ def create_order():
     return render_template("create-order.html", form=form)
 
 
-@app.route('/create-solution')
+@app.route('/create-solution', methods=['GET', 'POST'])
 @login_required
 def create_solution():
-    is_result, figure, output_list = optimization_algorithm()
+    form = SolutionForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        order_list = json.loads(request.form['order_list'].replace("'", '"'))
+        machine_list = json.loads(request.form['machine_list'].replace("'", '"'))
+        folder_name = request.form['folder_name']
+        time_now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        directory = app.config['UPLOAD_FOLDER'] + "/Solutions/" + time_now + "_" + folder_name
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(os.path.join(directory, "order_list.json"), "w", encoding='utf8') as f:
+            json.dump(order_list, f, ensure_ascii=False, indent=4, separators=(',', ': '))
+        with open(os.path.join(directory, "machine_list.json"), "w", encoding='utf8') as f:
+            json.dump(machine_list, f, ensure_ascii=False, indent=4, separators=(',', ': '))
+        return redirect(url_for('view_solutions'))
+
+    if form.folder_name.errors:
+        flash(form.folder_name.errors[0])
+
+    is_result, order_list, machine_list = optimization_algorithm()
     if is_result:
-        return render_template("create-solution.html", is_result=is_result, figure=figure, output_list=output_list)
+        return render_template("create-solution.html", is_result=is_result, order_list=order_list, machine_list=machine_list, form=form)
     else:
-        return render_template("create-solution.html", is_result=is_result, figure=figure, output_list=output_list)
+        return render_template("create-solution.html", is_result=is_result)
 
 
 @app.route('/delete-machine/<int:id>')
@@ -114,6 +134,18 @@ def delete_order(id):
     except:
         flash("Error While Deleting Machine!")
         return render_template("view-orders.html", values=Order.query.all())
+
+
+
+@app.route('/delete-solution/<string:directory>')
+@login_required
+def delete_solution(directory):
+    folder_path = app.config['UPLOAD_FOLDER'] + '/Solutions/' + directory
+    shutil.rmtree(folder_path)
+    directory = app.config['UPLOAD_FOLDER'] + "/Solutions"
+    directories = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    flash("Solution Deleted Successfully!")
+    return render_template("view-solutions.html", directories=directories)
 
 
 @app.route('/')
@@ -203,6 +235,20 @@ def save_file(form, folder):
     return filepath
 
 
+@app.route('/solution/<string:directory>', methods=['GET', 'POST'])
+@login_required
+def solution(directory):
+    folder = app.config['UPLOAD_FOLDER'] + "/Solutions/" + directory
+    order_list_json = os.path.join(folder, 'order_list.json')
+    machine_list_json = os.path.join(folder, 'machine_list.json')
+    with open(order_list_json, 'r', encoding='utf-8') as f:
+        order_list = json.load(f)
+    with open(machine_list_json, 'r', encoding='utf-8') as f:
+        machine_list = json.load(f)
+    return render_template("solution.html", order_list=order_list, machine_list=machine_list)
+
+
+
 @app.route('/upload-machine', methods=['GET', 'POST'])
 @login_required
 def upload_machine():
@@ -281,6 +327,14 @@ def view_machines():
 @login_required
 def view_orders():
     return render_template("view-orders.html", values=Order.query.all())
+
+
+@app.route('/view-solutions')
+@login_required
+def view_solutions():
+    directory = app.config['UPLOAD_FOLDER'] + "/Solutions"
+    directories = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    return render_template("view-solutions.html", directories=directories)
 
 
 # Invalid URL error handler
