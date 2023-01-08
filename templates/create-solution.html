@@ -200,7 +200,7 @@ PrintX Create Solution Page
                     {% for item in machine_list %}
                           <tr>
                                 <td>{{ item.machine }}</td>
-                                <td>{{ item.used_hours }} </td>
+                                <td>{{'%0.2f' % item.used_hours }} </td>
                                 <td>{{ item.available_hours }} </td>
                                 <td>{{'%0.2f' % ((item.used_hours / item.available_hours) * 100)+" %" |string}}</td>
                                 {% if 60 < ((item.used_hours / item.available_hours) * 100) <= 100 %}

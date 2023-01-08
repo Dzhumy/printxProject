@@ -9,9 +9,9 @@ printing_profits = {
 
 printing_difficulty = {
     "Offset Printing": 0.1,
-    "Digital Printing": 0.5,
-    "Screen Printing": 1,
-    "Letterpress Printing": 1.5
+    "Digital Printing": 0.15,
+    "Screen Printing": 0.2,
+    "Letterpress Printing": 0.25
 }
 
 
@@ -28,7 +28,7 @@ def optimization_algorithm():
             "name": order.name,
             "type": order.order_type,
             "profit": printing_profits[order.order_type],
-            "machine_times": {machine.name: (machine.equipment_capacity / 100) for machine in machines},
+            "machine_times": {machine.name: (machine.equipment_capacity / 100) * printing_difficulty[order.order_type] for machine in machines},
             "minimum_demand": order.count
         } for order in orders
     ]
