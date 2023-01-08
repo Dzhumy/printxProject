@@ -332,7 +332,8 @@ def view_orders():
 @app.route('/view-solutions')
 @login_required
 def view_solutions():
-    directory = app.config['UPLOAD_FOLDER'] + "/Solutions"
+    directory = app.config['UPLOAD_FOLDER'] + "/Solutions/"
+    print(directory)
     directories = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
     return render_template("view-solutions.html", directories=directories)
 
