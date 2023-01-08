@@ -238,7 +238,8 @@ def save_file(form, folder):
 @app.route('/solution/<string:directory>', methods=['GET', 'POST'])
 @login_required
 def solution(directory):
-    folder = app.config['UPLOAD_FOLDER'] + "/Solutions/" + directory
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    folder = os.path.join(base_dir, app.config['UPLOAD_FOLDER'], 'Solutions', directory)
     order_list_json = os.path.join(folder, 'order_list.json')
     machine_list_json = os.path.join(folder, 'machine_list.json')
     with open(order_list_json, 'r', encoding='utf-8') as f:
