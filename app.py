@@ -89,7 +89,8 @@ def create_solution():
         machine_list = json.loads(request.form['machine_list'].replace("'", '"'))
         folder_name = request.form['folder_name']
         time_now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        directory = app.config['UPLOAD_FOLDER'] + "/Solutions/" + time_now + "_" + folder_name
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        directory = os.path.join(base_dir, app.config['UPLOAD_FOLDER'], 'Solutions', time_now + "_" + folder_name)
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(os.path.join(directory, "order_list.json"), "w", encoding='utf8') as f:

@@ -8,7 +8,10 @@ printing_profits = {
 }
 
 printing_difficulty = {
-
+    "Offset Printing": 0.1,
+    "Digital Printing": 0.5,
+    "Screen Printing": 1,
+    "Letterpress Printing": 1.5
 }
 
 
